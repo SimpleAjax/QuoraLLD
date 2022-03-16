@@ -1,30 +1,38 @@
-package tests;
 
-import models.*;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import repositories.IAnswerRepository;
 import repositories.IQuestionRepository;
-import repositories.impl.AnswerRepository;
-import repositories.impl.QuestionRepository;
-import services.IPostService;
 import services.impl.PostService;
+import models.*;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+@ExtendWith(MockitoExtension.class)
+@RunWith(JUnitPlatform.class)
 public class PostServiceTest {
     User user1, user2, user3, user4, user5;
+    @Mock
     IQuestionRepository questionRepository;
+    @Mock
     IAnswerRepository answerRepository;
-    IPostService postService;
+    @InjectMocks
+    PostService postService;
     Question question1, question2;
     Answer answer11, answer12;
     @BeforeEach
     public void init() {
 
-        questionRepository = new QuestionRepository();
-        answerRepository = new AnswerRepository();
-
-        postService = new PostService(questionRepository, answerRepository);
+        initMocks(this);
 
         user1 = new User("user1", "user1");
         user2 = new User("user2", "user2");
@@ -58,29 +66,21 @@ public class PostServiceTest {
     public void testUpvoteAndDownvoteQuestion() {
         // downvote question2 by user3
         postService.downvotePost(user3, question2);
+        verify(questionRepository).downvote(any(), eq(question2));
 
         // upvote question1 by user1
         postService.upvotePost(user1, question1);
-
-        boolean isUpvoted = question1.getVote().getUpvotes().contains(user1.getId());
-        boolean isDownvoted = question2.getVote().getDownvotes().contains(user3.getId());
-        Assertions.assertTrue(isUpvoted);
-        Assertions.assertTrue(isDownvoted);
+        verify(questionRepository).upvote(any(), eq(question1));
     }
 
     @Test
     public void testUpvoteAndDownvoteAnswer() {
         // upvote answer12 by user 4
         postService.upvotePost(user4, answer12);
-
+        verify(answerRepository).upvote(any(), eq(answer12));
         // downvote answer11 by user 5
         postService.downvotePost(user5, answer11);
-
-        boolean isUpvoted = answer12.getVote().getUpvotes().contains(user4.getId());
-        boolean isDownvoted = answer11.getVote().getDownvotes().contains(user5.getId());
-
-        Assertions.assertTrue(isUpvoted);
-        Assertions.assertTrue(isDownvoted);
+        verify(answerRepository).downvote(any(), eq(answer11));
     }
 
 }

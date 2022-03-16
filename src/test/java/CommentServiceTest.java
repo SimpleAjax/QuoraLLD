@@ -1,42 +1,49 @@
-package tests;
-
 import models.Answer;
 import models.Comment;
 import models.Question;
 import models.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import repositories.IAnswerRepository;
 import repositories.ICommentRepository;
 import repositories.IQuestionRepository;
-import repositories.impl.AnswerRepository;
-import repositories.impl.CommentRepository;
-import repositories.impl.QuestionRepository;
-import services.ICommentService;
-import services.IPostService;
 import services.impl.CommentService;
 import services.impl.PostService;
 
+import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+@ExtendWith(MockitoExtension.class)
+@RunWith(JUnitPlatform.class)
 public class CommentServiceTest {
 
     User user1, user2, user3, user4, user5;
+    @Mock
     IQuestionRepository questionRepository;
+    @Mock
     IAnswerRepository answerRepository;
+    @Mock
     ICommentRepository commentRepository;
-    IPostService postService;
-    ICommentService commentService;
+
+    //TODO: can we only @InjectMock a class and not interface?
+    @InjectMocks
+    PostService postService;
+    @InjectMocks
+    CommentService commentService;
     Question question1, question2;
     Answer answer11, answer12;
 
+
     @BeforeEach
     public void init() {
-        questionRepository = new QuestionRepository();
-        answerRepository = new AnswerRepository();
-        commentRepository = new CommentRepository();
-
-        commentService = new CommentService(commentRepository);
-        postService = new PostService(questionRepository, answerRepository);
+        // TODO: does it automatically searches for the argument and passes them as reuiqred?
+        initMocks(this);
 
         user1 = new User("user1", "user1");
         user2 = new User("user2", "user2");
@@ -65,30 +72,24 @@ public class CommentServiceTest {
         postService.postAnswer(answer12);
     }
 
+
+
     @Test
     public void commentOnQuestionAndAnswer() {
         // comment21 on question2 by user 5
         Comment comment21 = new Comment(question2.getId(), user3.getId(), "comment21 content");
         commentService.postComment(comment21);
+        verify(commentRepository).add(eq(comment21));
 
         // comment112 on answer11 by user 3
         Comment comment112 = new Comment(answer11.getId(), user5.getId(), "comment112 content");
         commentService.postComment(comment112);
-
-        Assertions.assertEquals("comment21 content",
-                commentService.getComments(question2.getId()).get(0).getContent());
-
-        Assertions.assertEquals("comment112 content",
-                commentService.getComments(answer11.getId()).get(0).getContent());
-
-        Assertions.assertEquals(1, commentService.getComments(question2.getId()).size());
-        Assertions.assertEquals(1, commentService.getComments(answer11.getId()).size());
+        verify(commentRepository).add(eq(comment112));
 
         // comment112 on answer11 by user 4
         Comment comment1124 = new Comment(answer11.getId(), user4.getId(), "comment1124 content");
         commentService.postComment(comment1124);
-
-        Assertions.assertEquals(2, commentService.getComments(answer11.getId()).size());
+        verify(commentRepository).add(eq(comment1124));
 
     }
 
